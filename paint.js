@@ -10,8 +10,34 @@ var data;
 var pencil = 0;
 
 var zoom = 1;
+var pxsize = 15;
 var dx = 0;
 var dy = 0;
+
+var round = function(c) {
+    return Math.floor(c / 51) * 3;
+};
+
+var makecolor = function(a) {
+    return '#'
+        + round(a[0]).toString(16)
+        + round(a[1]).toString(16)
+        + round(a[2]).toString(16);
+};
+
+var sRGB = function(c) {
+    var x = round(c) / 15;
+    if (x < 0.04045) {
+        return x / 12.92;
+    } else {
+        return Math.pow((x + 0.055) / 1.055, 2.4);
+    }
+};
+
+var makeContrast = function(a) {
+    var l = 0.2126 * sRGB(a[0]) + 0.7152 * sRGB(a[1]) + 0.0722 * sRGB(a[2]);
+    return l > 0.18 ? '#000' : '#fff';
+}
 
 var onAnimation = function(fn) {
     var called = false;
@@ -53,31 +79,6 @@ var img2data = function(img, scale) {
     return _ctx.getImageData(0, 0, _canvas.width, _canvas.height);
 };
 
-var round = function(c) {
-    return Math.floor(c / 51) * 3;
-};
-
-var makecolor = function(a) {
-    return '#'
-        + round(a[0]).toString(16)
-        + round(a[1]).toString(16)
-        + round(a[2]).toString(16);
-};
-
-var sRGB = function(c) {
-    var x = round(c) / 15;
-    if (x < 0.04045) {
-        return x / 12.92;
-    } else {
-        return Math.pow((x + 0.055) / 1.055, 2.4);
-    }
-};
-
-var makeContrast = function(a) {
-    var l = 0.2126 * sRGB(a[0]) + 0.7152 * sRGB(a[1]) + 0.0722 * sRGB(a[2]);
-    return l > 0.18 ? '#000' : '#fff';
-}
-
 var analyze = function(img) {
     var c, i, j;
     var colors = ['white'];
@@ -102,22 +103,28 @@ var analyze = function(img) {
     };
 };
 
-var setPixel = function(x, y, color) {
+var _setPixel = function(x, y, color) {
     var i = y * data.width + x;
     octx.fillStyle = data.colors[color];
-    octx.fillRect(x * 10, y * 10, 10, 10);
+    octx.fillRect(x * pxsize, y * pxsize, pxsize, pxsize);
     if (color !== data.data[i]) {
         octx.fillStyle = data.contrasts[color];
-        octx.fillText(data.data[i], x * 10 + 5, y * 10 + 5);
+        octx.fillText(data.data[i], (x + 0.5) * pxsize, (y + 0.5) * pxsize);
     }
 };
+
+var setPixel = function(x, y, color) {
+    if (x >= 0 && x < data.width && y >= 0 && y < data.height) {
+        _setPixel(Math.floor(x), Math.floor(y), color);
+    }
+}
 
 input.addEventListener('change', () => {
     file2img(input.files[0]).then(img => {
         // FIXME: configurable size
         data = analyze(img2data(img, 100 / img.width));
-        offcanvas.width = data.width * 10;
-        offcanvas.height = data.height * 10;
+        offcanvas.width = data.width * pxsize;
+        offcanvas.height = data.height * pxsize;
         octx.textAlign = 'center';
         octx.textBaseline = 'middle';
 
@@ -193,22 +200,55 @@ window.addEventListener('keydown', event => {
     render();
 });
 
+var prev_x = null;
+var prev_y = null;
+
+var drawLine = function(x1, y1, x2, y2, color) {
+    var a, x, y;
+    var dx = Math.abs(x1 - x2);
+    var dy = Math.abs(y1 - y2);
+
+    if (dx == 0 && dy == 0) {
+        setPixel(Math.floor(x1), Math.floor(y1), color);
+    }
+    if (dx > dy) {
+        a = (y1 - y2) / (x1 - x2);
+        for (x = Math.floor(Math.min(x1, x2)) + 1; x <= Math.max(x1, x2); x++) {
+            y = a * (x - x2) + y2;
+            setPixel(x, y, color);
+            setPixel(x - 1, y, color);
+        }
+    } else {
+        a = (x1 - x2) / (y1 - y2);
+        for (y = Math.floor(Math.min(y1, y2)) + 1; y <= Math.max(y1, y2); y++) {
+            x = a * (y - y2) + x2;
+            setPixel(x, y, color);
+            setPixel(x, y - 1, color);
+        }
+    }
+};
+
+var last_click = null;
+
 var onClick = function(event) {
     if (event.buttons & 1) {
         var rect = canvas.getBoundingClientRect();
         var cx = event.clientX - rect.x;
         var cy = event.clientY - rect.y;
 
-        var ocx = (cx - dx) / zoom;
-        var ocy = (cy - dy) / zoom;
+        var ocx = (cx - dx) / zoom / pxsize;
+        var ocy = (cy - dy) / zoom / pxsize;
 
-        var x = Math.floor(ocx / 10);
-        var y = Math.floor(ocy / 10);
-
-        if (x >= 0 && x < data.width && y >= 0 && y < data.height) {
-            setPixel(x, y, pencil);
-            render();
+        if (last_click) {
+            drawLine(last_click.x, last_click.y, ocx, ocy, pencil);
+        } else {
+            setPixel(ocx, ocy, pencil);
         }
+        last_click = {x: ocx, y: ocy};
+
+        render();
+    } else {
+        last_click = null;
     }
 };
 
