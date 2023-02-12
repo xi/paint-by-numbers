@@ -216,6 +216,14 @@ window.addEventListener('wheel', event => {
     render();
 });
 
+var setPencil = function(color) {
+    if (color >= 0 && color < data.colors.length) {
+        pencil = color;
+        palette.pencil.value = pencil;
+        palette.querySelector(':checked').parentElement.scrollIntoView();
+    }
+}
+
 window.addEventListener('keydown', event => {
     // FIXME: kinetic movement;
     var step = 10;
@@ -232,13 +240,9 @@ window.addEventListener('keydown', event => {
         speed_x = -step;
         applySpeed();
     } else if (event.key === 'q') {
-        pencil -= 1;
-        palette.pencil.value = pencil;
-        palette.querySelector(':checked').parentElement.scrollIntoView();
+        setPencil(pencil - 1);
     } else if (event.key === 'e') {
-        pencil += 1;
-        palette.pencil.value = pencil;
-        palette.querySelector(':checked').parentElement.scrollIntoView();
+        setPencil(pencil + 1);
     }
     render();
 });
