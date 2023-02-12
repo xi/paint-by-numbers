@@ -10,9 +10,11 @@ var data;
 var pencil = 0;
 
 var zoom = 1;
-var pxsize = 15;
+var pxsize = 12;
 var dx = 0;
 var dy = 0;
+var speed_x = 0;
+var speed_y = 0;
 
 var round = function(c) {
     return Math.floor(c / 51) * 3;
@@ -132,8 +134,6 @@ input.addEventListener('change', () => {
         dx = (canvas.width - offcanvas.width * zoom) / 2;
         dy = (canvas.height - offcanvas.height * zoom) / 2;
 
-        // FIXME: zoom to fit and center
-
         var x, y;
         for (y = 0; y < data.height; y++) {
             for (x = 0; x < data.width; x++) {
@@ -162,6 +162,17 @@ var render = onAnimation(function() {
     ctx.drawImage(offcanvas, dx, dy, offcanvas.width * zoom, offcanvas.height * zoom);
 });
 
+var applySpeed = onAnimation(function() {
+    dx += speed_x;
+    dy += speed_y;
+    render();
+    speed_x *= 0.85;
+    speed_y *= 0.85;
+    if (Math.abs(speed_x) > 0.1 || Math.abs(speed_y) > 0.1) {
+        setTimeout(applySpeed);
+    }
+});
+
 window.addEventListener('resize', resizeCanvas);
 resizeCanvas();
 
@@ -185,13 +196,17 @@ window.addEventListener('keydown', event => {
     // FIXME: kinetic movement;
     var step = 10;
     if (event.key === 'w') {
-        dy += step;
+        speed_y = step;
+        applySpeed();
     } else if (event.key === 'a') {
-        dx += step;
+        speed_x = step;
+        applySpeed();
     } else if (event.key === 's') {
-        dy -= step;
+        speed_y = -step;
+        applySpeed();
     } else if (event.key === 'd') {
-        dx -= step;
+        speed_x = -step;
+        applySpeed();
     } else if (event.key === 'q') {
         pencil -= 1;
     } else if (event.key === 'e') {
