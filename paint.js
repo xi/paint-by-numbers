@@ -1,4 +1,5 @@
 var input = document.querySelector('input');
+var palette = document.querySelector('.palette');
 
 var canvas = document.querySelector('canvas');
 var ctx = canvas.getContext('2d');
@@ -130,6 +131,26 @@ input.addEventListener('change', () => {
         octx.textAlign = 'center';
         octx.textBaseline = 'middle';
 
+        palette.innerHTML = '';
+        for (var i = 0; i < data.colors.length; i++) {
+            var label = document.createElement('label');
+            var radio = document.createElement('input');
+            radio.type = 'radio';
+            radio.name = 'pencil';
+            radio.value = i;
+            var span = document.createElement('span');
+            span.textContent = i;
+            label.append(radio);
+            label.append(span);
+            span.style.color = data.contrasts[i];
+            span.style.backgroundColor = data.colors[i];
+            palette.append(label);
+            radio.addEventListener('change', event => {
+                pencil = parseInt(event.target.value, 10);
+            });
+        }
+        resizeCanvas();
+
         zoom = canvas.height / offcanvas.height * 0.8;
         dx = (canvas.width - offcanvas.width * zoom) / 2;
         dy = (canvas.height - offcanvas.height * zoom) / 2;
@@ -209,8 +230,12 @@ window.addEventListener('keydown', event => {
         applySpeed();
     } else if (event.key === 'q') {
         pencil -= 1;
+        palette.pencil.value = pencil;
+        palette.querySelector(':checked').parentElement.scrollIntoView();
     } else if (event.key === 'e') {
         pencil += 1;
+        palette.pencil.value = pencil;
+        palette.querySelector(':checked').parentElement.scrollIntoView();
     }
     render();
 });
