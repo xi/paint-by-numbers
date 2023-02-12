@@ -149,6 +149,7 @@ input.addEventListener('change', () => {
                 pencil = parseInt(event.target.value, 10);
             });
         }
+        setPencil(0);
         resizeCanvas();
 
         zoom = canvas.height / offcanvas.height * 0.8;
