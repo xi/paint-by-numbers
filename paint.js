@@ -41,11 +41,11 @@ var makeContrast = function(a) {
 
 var onAnimation = function(fn) {
     var called = false;
-    return () => {
+    return (...args) => {
         if (!called) {
             called = true;
             window.requestAnimationFrame(() => {
-                fn();
+                fn(...args);
                 called = false;
             });
         }
@@ -230,7 +230,7 @@ var drawLine = function(x1, y1, x2, y2, color) {
 
 var last_click = null;
 
-var onClick = function(event) {
+var onClick = onAnimation(function(event) {
     if (event.buttons & 1) {
         var rect = canvas.getBoundingClientRect();
         var cx = event.clientX - rect.x;
@@ -250,7 +250,7 @@ var onClick = function(event) {
     } else {
         last_click = null;
     }
-};
+});
 
 window.addEventListener('mousemove', onClick);
 window.addEventListener('mousedown', onClick);
