@@ -155,6 +155,9 @@ input.addEventListener('change', () => {
         dx = (canvas.width - offcanvas.width * zoom) / 2;
         dy = (canvas.height - offcanvas.height * zoom) / 2;
 
+        speed_x = 0;
+        speed_y = 0;
+
         var x, y;
         for (y = 0; y < data.height; y++) {
             for (x = 0; x < data.width; x++) {
