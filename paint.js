@@ -295,5 +295,5 @@ var onClick = onAnimation(function(event) {
     }
 });
 
-window.addEventListener('mousemove', onClick);
-window.addEventListener('mousedown', onClick);
+canvas.addEventListener('mousemove', onClick);
+canvas.addEventListener('mousedown', onClick);
