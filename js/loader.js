@@ -1,3 +1,5 @@
+import { rgbToLab, labToRgb, hex } from './color.js';
+
 var file2img = function(file) {
     // FIXME: uses unsafe inline image
     return new Promise((resolve, reject) => {
@@ -26,46 +28,62 @@ var img2data = function(img, width) {
     return _ctx.getImageData(0, 0, _canvas.width, _canvas.height);
 };
 
-var round = function(c) {
-    return Math.floor(c / 51) * 3;
-};
 
-var makecolor = function(a) {
-    return '#'
-        + round(a[0]).toString(16)
-        + round(a[1]).toString(16)
-        + round(a[2]).toString(16);
-};
-
-var sRGB = function(c) {
-    var x = round(c) / 15;
-    if (x < 0.04045) {
-        return x / 12.92;
-    } else {
-        return Math.pow((x + 0.055) / 1.055, 2.4);
+class Cluster {
+    constructor(center) {
+        this.center = center;
+        this.count = 1;
     }
-};
 
-var makeContrast = function(a) {
-    var l = 0.2126 * sRGB(a[0]) + 0.7152 * sRGB(a[1]) + 0.0722 * sRGB(a[2]);
-    return l > 0.18 ? '#000' : '#fff';
-};
+    distance(color) {
+        return Math.sqrt(
+            Math.pow(this.center[0] - color[0], 2)
+            + Math.pow(this.center[1] - color[1], 2)
+            + Math.pow(this.center[2] - color[2], 2)
+        );
+    }
+
+    add(color) {
+        this.center = [
+            (this.center[0] * this.count + color[0]) / (this.count + 1),
+            (this.center[1] * this.count + color[1]) / (this.count + 1),
+            (this.center[2] * this.count + color[2]) / (this.count + 1),
+        ];
+        this.count += 1;
+    }
+}
 
 var analyze = function(img) {
-    var c, i, j;
+    var j;
+    var clusters = [];
+    var out = [];
+    for (var i = 0; i < img.data.length; i += 4) {
+        var lab = rgbToLab([
+            img.data[i],
+            img.data[i + 1],
+            img.data[i + 2],
+        ]);
+
+        for (j = 0; j < clusters.length; j++) {
+            if (clusters[j].distance(lab) < 0.05) {
+                clusters[j].add(lab);
+                out.push(j + 1);
+                break;
+            }
+        }
+        if (j === clusters.length) {
+            clusters.push(new Cluster(lab));
+            out.push(j + 1);
+        }
+    }
+
     var colors = ['white'];
     var contrasts = ['black'];
-    var out = [];
-    for (i = 0; i < img.data.length; i += 4) {
-        c = makecolor(img.data.slice(i, i + 3));
-        j = colors.indexOf(c);
-        if (j === -1) {
-            j = colors.length;
-            colors.push(c);
-            contrasts.push(makeContrast(img.data.slice(i, i + 3)));
-        }
-        out.push(j);
+    for (j = 0; j < clusters.length; j++) {
+        colors.push(hex(labToRgb(clusters[j].center)));
+        contrasts.push(clusters[j].center[0] < 0.5 ? 'white' : 'black');
     }
+
     return {
         width: img.width,
         height: img.height,
