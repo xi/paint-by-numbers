@@ -75,11 +75,6 @@ loader.addEventListener('submit', event => {
 
 window.addEventListener('resize', () => view.refreshSize());
 
-canvas.addEventListener('wheel', event => {
-    view.setZoom(event.offsetX, event.offsetY, view.zoom * Math.pow(2, -event.deltaY / 100 / 100));
-    view.render();
-});
-
 window.addEventListener('keydown', event => {
     // FIXME: kinetic movement;
     var step = 10;
@@ -124,3 +119,8 @@ var onClick = function(event) {
 
 canvas.addEventListener('mousemove', onClick);
 canvas.addEventListener('mousedown', onClick);
+
+canvas.addEventListener('wheel', event => {
+    view.setZoom(event.offsetX, event.offsetY, view.zoom * Math.pow(2, -event.deltaY / 100 / 100));
+    view.render();
+});
