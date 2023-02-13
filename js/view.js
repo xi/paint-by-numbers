@@ -22,6 +22,13 @@ export class View {
         this.render();
     }
 
+    reset() {
+        this.zoom = this.canvas.height / this.frame.canvas.height * 0.8;
+        this.dx = (this.canvas.width - this.frame.canvas.width * this.zoom) / 2;
+        this.dy = (this.canvas.height - this.frame.canvas.height * this.zoom) / 2;
+        this.render();
+    }
+
     toFrameXY(x, y) {
         var frame_x = (x - this.dx) / this.zoom / this.frame.pxsize;
         var frame_y = (y - this.dy) / this.zoom / this.frame.pxsize;

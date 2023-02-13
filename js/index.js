@@ -14,42 +14,38 @@ var pencil = 0;
 var speed_x = 0;
 var speed_y = 0;
 
-input.addEventListener('change', () => {
-    // FIXME: configurable size
-    loadImage(input, 80).then(image => {
-        frame.setImage(image);
+var setupPalette = function(image) {
+    palette.innerHTML = '';
+    for (var i = 0; i < image.colors.length; i++) {
+        var radio = document.createElement('input');
+        radio.type = 'radio';
+        radio.name = 'pencil';
+        radio.value = i;
+        radio.addEventListener('change', event => {
+            pencil = parseInt(event.target.value, 10);
+        });
 
-        palette.innerHTML = '';
-        for (var i = 0; i < image.colors.length; i++) {
-            var label = document.createElement('label');
-            var radio = document.createElement('input');
-            radio.type = 'radio';
-            radio.name = 'pencil';
-            radio.value = i;
-            var span = document.createElement('span');
-            span.textContent = i;
-            label.append(radio);
-            label.append(span);
-            span.style.color = image.contrasts[i];
-            span.style.backgroundColor = image.colors[i];
-            palette.append(label);
-            radio.addEventListener('change', event => {
-                pencil = parseInt(event.target.value, 10);
-            });
-        }
-        setPencil(0);
-        view.refreshSize();
+        var span = document.createElement('span');
+        span.textContent = i;
+        span.style.color = image.contrasts[i];
+        span.style.backgroundColor = image.colors[i];
 
-        view.zoom = view.canvas.height / frame.canvas.height * 0.8;
-        view.dx = (view.canvas.width - frame.canvas.width * view.zoom) / 2;
-        view.dy = (view.canvas.height - frame.canvas.height * view.zoom) / 2;
+        var label = document.createElement('label');
+        label.append(radio);
+        label.append(span);
 
-        speed_x = 0;
-        speed_y = 0;
+        palette.append(label);
+    }
+    view.refreshSize();
+};
 
-        view.render();
-    });
-});
+var setPencil = function(color) {
+    if (color >= 0 && color < palette.pencil.length) {
+        pencil = color;
+        palette.pencil.value = pencil;
+        palette.querySelector(':checked').parentElement.scrollIntoView();
+    }
+};
 
 var applySpeed = utils.throttle(function() {
     view.dx += speed_x;
@@ -62,20 +58,26 @@ var applySpeed = utils.throttle(function() {
     }
 }, 'animation');
 
+input.addEventListener('change', () => {
+    // FIXME: configurable size
+    loadImage(input, 80).then(image => {
+        setupPalette(image);
+        setPencil(0);
+
+        frame.setImage(image);
+        view.reset();
+
+        speed_x = 0;
+        speed_y = 0;
+    });
+});
+
 window.addEventListener('resize', () => view.refreshSize());
 
 canvas.addEventListener('wheel', event => {
     view.setZoom(event.offsetX, event.offsetY, view.zoom * Math.pow(2, -event.deltaY / 100 / 100));
     view.render();
 });
-
-var setPencil = function(color) {
-    if (color >= 0 && color < palette.pencil.length) {
-        pencil = color;
-        palette.pencil.value = pencil;
-        palette.querySelector(':checked').parentElement.scrollIntoView();
-    }
-};
 
 window.addEventListener('keydown', event => {
     // FIXME: kinetic movement;
@@ -104,14 +106,14 @@ var last_click = null;
 
 var onClick = function(event) {
     if (event.buttons & 1) {
-        var [frame_x, frame_y] = view.toFrameXY(event.offsetX, event.offsetY);
+        var [x, y] = view.toFrameXY(event.offsetX, event.offsetY);
 
         if (last_click) {
-            frame.drawLine(last_click.x, last_click.y, frame_x, frame_y, pencil);
+            frame.drawLine(last_click.x, last_click.y, x, y, pencil);
         } else {
-            frame.setPixel(frame_x, frame_y, pencil);
+            frame.setPixel(x, y, pencil);
         }
-        last_click = {x: frame_x, y: frame_y};
+        last_click = {x: x, y: y};
 
         view.render();
     } else {
