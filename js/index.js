@@ -3,7 +3,7 @@ import { View } from './view.js';
 import { loadImage } from './loader.js';
 import * as utils from './utils.js';
 
-var input = document.querySelector('input');
+var loader = document.querySelector('.loader');
 var palette = document.querySelector('.palette');
 var canvas = document.querySelector('canvas');
 
@@ -58,9 +58,10 @@ var applySpeed = utils.throttle(function() {
     }
 }, 'animation');
 
-input.addEventListener('change', () => {
-    // FIXME: configurable size
-    loadImage(input, 80).then(image => {
+loader.addEventListener('submit', event => {
+    event.preventDefault();
+    var width = parseInt(loader.width.value, 10);
+    loadImage(loader.file, width).then(image => {
         setupPalette(image);
         setPencil(0);
 

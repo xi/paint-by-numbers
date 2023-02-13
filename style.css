@@ -15,6 +15,11 @@ canvas {
 	height: 100%;
 }
 
+.loader {
+	padding: 0.2em;
+	text-align: center;
+}
+
 .palette {
 	overflow-x: auto;
 	white-space: nowrap;

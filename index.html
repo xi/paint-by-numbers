@@ -6,9 +6,11 @@
 	<link rel="stylesheet" href="style.css">
 </head>
 <body>
-	<div>
-		<input type="file">
-	</div>
+	<form class="loader">
+		<input name="file" type="file">
+		<input name="width" type="number" value="80">
+		<button>Load</button>
+	</form>
 	<canvas></canvas>
 	<form class="palette"></form>
 	<script src="js/index.js" type="module"></script>
