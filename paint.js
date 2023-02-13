@@ -1,19 +1,18 @@
 import { Frame, PXSIZE } from './frame.js';
+import { View } from './view.js';
+import * as utils from './utils.js';
 
 var input = document.querySelector('input');
 var palette = document.querySelector('.palette');
 
 var canvas = document.querySelector('canvas');
-var ctx = canvas.getContext('2d');
 
 var frame = new Frame();
+var view = new View(canvas, frame);
 
 var data;
 var pencil = 0;
 
-var zoom = 1;
-var dx = 0;
-var dy = 0;
 var speed_x = 0;
 var speed_y = 0;
 
@@ -40,19 +39,6 @@ var sRGB = function(c) {
 var makeContrast = function(a) {
     var l = 0.2126 * sRGB(a[0]) + 0.7152 * sRGB(a[1]) + 0.0722 * sRGB(a[2]);
     return l > 0.18 ? '#000' : '#fff';
-};
-
-var onAnimation = function(fn) {
-    var called = false;
-    return (...args) => {
-        if (!called) {
-            called = true;
-            window.requestAnimationFrame(() => {
-                fn(...args);
-                called = false;
-            });
-        }
-    };
 };
 
 var file2img = function(file) {
@@ -132,64 +118,47 @@ input.addEventListener('change', () => {
             });
         }
         setPencil(0);
-        resizeCanvas();
+        view.refreshSize();
 
-        zoom = canvas.height / frame.canvas.height * 0.8;
-        dx = (canvas.width - frame.canvas.width * zoom) / 2;
-        dy = (canvas.height - frame.canvas.height * zoom) / 2;
+        view.zoom = view.canvas.height / frame.canvas.height * 0.8;
+        view.dx = (view.canvas.width - frame.canvas.width * view.zoom) / 2;
+        view.dy = (view.canvas.height - frame.canvas.height * view.zoom) / 2;
 
         speed_x = 0;
         speed_y = 0;
 
-        render();
+        view.render();
     });
 });
 
-var resizeCanvas = function() {
-    var rect = canvas.getBoundingClientRect();
-
-    dx += (rect.width - canvas.width) / 2;
-    dy += (rect.height - canvas.height) / 2;
-
-    canvas.width = rect.width;
-    canvas.height = rect.height;
-
-    render();
-};
-
-var render = onAnimation(function() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(frame.canvas, dx, dy, frame.canvas.width * zoom, frame.canvas.height * zoom);
-});
-
-var applySpeed = onAnimation(function() {
-    dx += speed_x;
-    dy += speed_y;
-    render();
+var applySpeed = utils.throttle(function() {
+    view.dx += speed_x;
+    view.dy += speed_y;
+    view.render();
     speed_x *= 0.85;
     speed_y *= 0.85;
     if (Math.abs(speed_x) > 0.1 || Math.abs(speed_y) > 0.1) {
         setTimeout(applySpeed);
     }
-});
+}, 'animation');
 
-window.addEventListener('resize', resizeCanvas);
-resizeCanvas();
+window.addEventListener('resize', () => view.refreshSize());
+view.refreshSize();
 
 window.addEventListener('wheel', event => {
     var rect = canvas.getBoundingClientRect();
     var cx = event.clientX - rect.x;
     var cy = event.clientY - rect.y;
 
-    var ocx = (cx - dx) / zoom;
-    var ocy = (cy - dy) / zoom;
+    var ocx = (cx - view.dx) / view.zoom;
+    var ocy = (cy - view.dy) / view.zoom;
 
-    zoom *= Math.pow(2, -event.deltaY / 100 / 100);
+    view.zoom *= Math.pow(2, -event.deltaY / 100 / 100);
 
-    dx = cx - ocx * zoom;
-    dy = cy - ocy * zoom;
+    view.dx = cx - ocx * view.zoom;
+    view.dy = cy - ocy * view.zoom;
 
-    render();
+    view.render();
 });
 
 var setPencil = function(color) {
@@ -220,7 +189,7 @@ window.addEventListener('keydown', event => {
     } else if (event.key === 'e') {
         setPencil(pencil + 1);
     }
-    render();
+    view.render();
 });
 
 var drawLine = function(x1, y1, x2, y2, color) {
@@ -250,14 +219,14 @@ var drawLine = function(x1, y1, x2, y2, color) {
 
 var last_click = null;
 
-var onClick = onAnimation(function(event) {
+var onClick = utils.throttle(function(event) {
     if (event.buttons & 1) {
         var rect = canvas.getBoundingClientRect();
         var cx = event.clientX - rect.x;
         var cy = event.clientY - rect.y;
 
-        var ocx = (cx - dx) / zoom / PXSIZE;
-        var ocy = (cy - dy) / zoom / PXSIZE;
+        var ocx = (cx - view.dx) / view.zoom / PXSIZE;
+        var ocy = (cy - view.dy) / view.zoom / PXSIZE;
 
         if (last_click) {
             drawLine(last_click.x, last_click.y, ocx, ocy, pencil);
@@ -266,11 +235,11 @@ var onClick = onAnimation(function(event) {
         }
         last_click = {x: ocx, y: ocy};
 
-        render();
+        view.render();
     } else {
         last_click = null;
     }
-});
+}, 'animation');
 
 canvas.addEventListener('mousemove', onClick);
 canvas.addEventListener('mousedown', onClick);
