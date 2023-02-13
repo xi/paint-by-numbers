@@ -125,7 +125,7 @@ var setPixel = function(x, y, color) {
 input.addEventListener('change', () => {
     file2img(input.files[0]).then(img => {
         // FIXME: configurable size
-        data = analyze(img2data(img, 100 / img.width));
+        data = analyze(img2data(img, 80 / img.width));
         offcanvas.width = data.width * pxsize;
         offcanvas.height = data.height * pxsize;
         octx.textAlign = 'center';
