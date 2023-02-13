@@ -1,17 +1,17 @@
+import { Frame, PXSIZE } from './frame.js';
+
 var input = document.querySelector('input');
 var palette = document.querySelector('.palette');
 
 var canvas = document.querySelector('canvas');
 var ctx = canvas.getContext('2d');
 
-var offcanvas = document.createElement('canvas');
-var octx = offcanvas.getContext('2d');
+var frame = new Frame();
 
 var data;
 var pencil = 0;
 
 var zoom = 1;
-var pxsize = 12;
 var dx = 0;
 var dy = 0;
 var speed_x = 0;
@@ -40,7 +40,7 @@ var sRGB = function(c) {
 var makeContrast = function(a) {
     var l = 0.2126 * sRGB(a[0]) + 0.7152 * sRGB(a[1]) + 0.0722 * sRGB(a[2]);
     return l > 0.18 ? '#000' : '#fff';
-}
+};
 
 var onAnimation = function(fn) {
     var called = false;
@@ -106,30 +106,12 @@ var analyze = function(img) {
     };
 };
 
-var _setPixel = function(x, y, color) {
-    var i = y * data.width + x;
-    octx.fillStyle = data.colors[color];
-    octx.fillRect(x * pxsize, y * pxsize, pxsize, pxsize);
-    if (color !== data.data[i]) {
-        octx.fillStyle = data.contrasts[color];
-        octx.fillText(data.data[i], (x + 0.5) * pxsize, (y + 0.5) * pxsize);
-    }
-};
-
-var setPixel = function(x, y, color) {
-    if (x >= 0 && x < data.width && y >= 0 && y < data.height) {
-        _setPixel(Math.floor(x), Math.floor(y), color);
-    }
-}
-
 input.addEventListener('change', () => {
     file2img(input.files[0]).then(img => {
         // FIXME: configurable size
         data = analyze(img2data(img, 80 / img.width));
-        offcanvas.width = data.width * pxsize;
-        offcanvas.height = data.height * pxsize;
-        octx.textAlign = 'center';
-        octx.textBaseline = 'middle';
+
+        frame.setImage(data);
 
         palette.innerHTML = '';
         for (var i = 0; i < data.colors.length; i++) {
@@ -152,19 +134,12 @@ input.addEventListener('change', () => {
         setPencil(0);
         resizeCanvas();
 
-        zoom = canvas.height / offcanvas.height * 0.8;
-        dx = (canvas.width - offcanvas.width * zoom) / 2;
-        dy = (canvas.height - offcanvas.height * zoom) / 2;
+        zoom = canvas.height / frame.canvas.height * 0.8;
+        dx = (canvas.width - frame.canvas.width * zoom) / 2;
+        dy = (canvas.height - frame.canvas.height * zoom) / 2;
 
         speed_x = 0;
         speed_y = 0;
-
-        var x, y;
-        for (y = 0; y < data.height; y++) {
-            for (x = 0; x < data.width; x++) {
-                setPixel(x, y, 0);
-            }
-        }
 
         render();
     });
@@ -184,7 +159,7 @@ var resizeCanvas = function() {
 
 var render = onAnimation(function() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(offcanvas, dx, dy, offcanvas.width * zoom, offcanvas.height * zoom);
+    ctx.drawImage(frame.canvas, dx, dy, frame.canvas.width * zoom, frame.canvas.height * zoom);
 });
 
 var applySpeed = onAnimation(function() {
@@ -223,7 +198,7 @@ var setPencil = function(color) {
         palette.pencil.value = pencil;
         palette.querySelector(':checked').parentElement.scrollIntoView();
     }
-}
+};
 
 window.addEventListener('keydown', event => {
     // FIXME: kinetic movement;
@@ -248,30 +223,27 @@ window.addEventListener('keydown', event => {
     render();
 });
 
-var prev_x = null;
-var prev_y = null;
-
 var drawLine = function(x1, y1, x2, y2, color) {
     var a, x, y;
     var dx = Math.abs(x1 - x2);
     var dy = Math.abs(y1 - y2);
 
-    if (dx == 0 && dy == 0) {
-        setPixel(Math.floor(x1), Math.floor(y1), color);
+    if (dx === 0 && dy === 0) {
+        frame.setPixel(Math.floor(x1), Math.floor(y1), color);
     }
     if (dx > dy) {
         a = (y1 - y2) / (x1 - x2);
         for (x = Math.floor(Math.min(x1, x2)) + 1; x <= Math.max(x1, x2); x++) {
             y = a * (x - x2) + y2;
-            setPixel(x, y, color);
-            setPixel(x - 1, y, color);
+            frame.setPixel(x, y, color);
+            frame.setPixel(x - 1, y, color);
         }
     } else {
         a = (x1 - x2) / (y1 - y2);
         for (y = Math.floor(Math.min(y1, y2)) + 1; y <= Math.max(y1, y2); y++) {
             x = a * (y - y2) + x2;
-            setPixel(x, y, color);
-            setPixel(x, y - 1, color);
+            frame.setPixel(x, y, color);
+            frame.setPixel(x, y - 1, color);
         }
     }
 };
@@ -284,13 +256,13 @@ var onClick = onAnimation(function(event) {
         var cx = event.clientX - rect.x;
         var cy = event.clientY - rect.y;
 
-        var ocx = (cx - dx) / zoom / pxsize;
-        var ocy = (cy - dy) / zoom / pxsize;
+        var ocx = (cx - dx) / zoom / PXSIZE;
+        var ocy = (cy - dy) / zoom / PXSIZE;
 
         if (last_click) {
             drawLine(last_click.x, last_click.y, ocx, ocy, pencil);
         } else {
-            setPixel(ocx, ocy, pencil);
+            frame.setPixel(ocx, ocy, pencil);
         }
         last_click = {x: ocx, y: ocy};
 
