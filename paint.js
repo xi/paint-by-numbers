@@ -1,5 +1,6 @@
 import { Frame, PXSIZE } from './frame.js';
 import { View } from './view.js';
+import { loadImage } from './loader.js';
 import * as utils from './utils.js';
 
 var input = document.querySelector('input');
@@ -16,88 +17,10 @@ var pencil = 0;
 var speed_x = 0;
 var speed_y = 0;
 
-var round = function(c) {
-    return Math.floor(c / 51) * 3;
-};
-
-var makecolor = function(a) {
-    return '#'
-        + round(a[0]).toString(16)
-        + round(a[1]).toString(16)
-        + round(a[2]).toString(16);
-};
-
-var sRGB = function(c) {
-    var x = round(c) / 15;
-    if (x < 0.04045) {
-        return x / 12.92;
-    } else {
-        return Math.pow((x + 0.055) / 1.055, 2.4);
-    }
-};
-
-var makeContrast = function(a) {
-    var l = 0.2126 * sRGB(a[0]) + 0.7152 * sRGB(a[1]) + 0.0722 * sRGB(a[2]);
-    return l > 0.18 ? '#000' : '#fff';
-};
-
-var file2img = function(file) {
-    return new Promise((resolve, reject) => {
-        var img = new Image();
-        var url = URL.createObjectURL(file);
-
-        img.onerror = err => {
-            URL.revokeObjectURL(url);
-            reject(err);
-        };
-        img.onload = () => {
-            URL.revokeObjectURL(url);
-            resolve(img);
-        };
-
-        img.src = url;
-    });
-};
-
-var img2data = function(img, scale) {
-    var _canvas = document.createElement('canvas');
-    _canvas.height = Math.round(img.height * scale);
-    _canvas.width = Math.round(img.width * scale);
-    var _ctx = _canvas.getContext('2d');
-    _ctx.drawImage(img, 0, 0, _canvas.width, _canvas.height);
-    return _ctx.getImageData(0, 0, _canvas.width, _canvas.height);
-};
-
-var analyze = function(img) {
-    var c, i, j;
-    var colors = ['white'];
-    var contrasts = ['black'];
-    var out = [];
-    for (i = 0; i < img.data.length; i += 4) {
-        c = makecolor(img.data.slice(i, i + 3));
-        j = colors.indexOf(c);
-        if (j === -1) {
-            j = colors.length;
-            colors.push(c);
-            contrasts.push(makeContrast(img.data.slice(i, i + 3)));
-        }
-        out.push(j);
-    }
-    return {
-        width: img.width,
-        height: img.height,
-        colors: colors,
-        contrasts: contrasts,
-        data: out,
-    };
-};
-
 input.addEventListener('change', () => {
-    file2img(input.files[0]).then(img => {
-        // FIXME: configurable size
-        data = analyze(img2data(img, 80 / img.width));
-
-        frame.setImage(data);
+    // FIXME: configurable size
+    loadImage(input, 80).then(image => {
+        frame.setImage(image);
 
         palette.innerHTML = '';
         for (var i = 0; i < data.colors.length; i++) {
