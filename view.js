@@ -22,6 +22,20 @@ export class View {
         this.render();
     }
 
+    toFrameXY(x, y) {
+        var frame_x = (x - this.dx) / this.zoom / this.frame.pxsize;
+        var frame_y = (y - this.dy) / this.zoom / this.frame.pxsize;
+
+        return [frame_x, frame_y];
+    }
+
+    setZoom(stable_x, stable_y, zoom) {
+        var [frame_x, frame_y] = this.toFrameXY(stable_x, stable_y);
+        this.zoom = zoom;
+        this.dx = stable_x - frame_x * zoom * this.frame.pxsize;
+        this.dy = stable_y - frame_y * zoom * this.frame.pxsize;
+    }
+
     render() {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         this.ctx.drawImage(

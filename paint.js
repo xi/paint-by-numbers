@@ -1,4 +1,4 @@
-import { Frame, PXSIZE } from './frame.js';
+import { Frame } from './frame.js';
 import { View } from './view.js';
 import { loadImage } from './loader.js';
 import * as utils from './utils.js';
@@ -64,19 +64,8 @@ var applySpeed = utils.throttle(function() {
 
 window.addEventListener('resize', () => view.refreshSize());
 
-window.addEventListener('wheel', event => {
-    var rect = canvas.getBoundingClientRect();
-    var cx = event.clientX - rect.x;
-    var cy = event.clientY - rect.y;
-
-    var ocx = (cx - view.dx) / view.zoom;
-    var ocy = (cy - view.dy) / view.zoom;
-
-    view.zoom *= Math.pow(2, -event.deltaY / 100 / 100);
-
-    view.dx = cx - ocx * view.zoom;
-    view.dy = cy - ocy * view.zoom;
-
+canvas.addEventListener('wheel', event => {
+    view.setZoom(event.offsetX, event.offsetY, view.zoom * Math.pow(2, -event.deltaY / 100 / 100));
     view.render();
 });
 
@@ -111,54 +100,24 @@ window.addEventListener('keydown', event => {
     view.render();
 });
 
-var drawLine = function(x1, y1, x2, y2, color) {
-    var a, x, y;
-    var dx = Math.abs(x1 - x2);
-    var dy = Math.abs(y1 - y2);
-
-    if (dx === 0 && dy === 0) {
-        frame.setPixel(Math.floor(x1), Math.floor(y1), color);
-    }
-    if (dx > dy) {
-        a = (y1 - y2) / (x1 - x2);
-        for (x = Math.floor(Math.min(x1, x2)) + 1; x <= Math.max(x1, x2); x++) {
-            y = a * (x - x2) + y2;
-            frame.setPixel(x, y, color);
-            frame.setPixel(x - 1, y, color);
-        }
-    } else {
-        a = (x1 - x2) / (y1 - y2);
-        for (y = Math.floor(Math.min(y1, y2)) + 1; y <= Math.max(y1, y2); y++) {
-            x = a * (y - y2) + x2;
-            frame.setPixel(x, y, color);
-            frame.setPixel(x, y - 1, color);
-        }
-    }
-};
-
 var last_click = null;
 
-var onClick = utils.throttle(function(event) {
+var onClick = function(event) {
     if (event.buttons & 1) {
-        var rect = canvas.getBoundingClientRect();
-        var cx = event.clientX - rect.x;
-        var cy = event.clientY - rect.y;
-
-        var ocx = (cx - view.dx) / view.zoom / PXSIZE;
-        var ocy = (cy - view.dy) / view.zoom / PXSIZE;
+        var [frame_x, frame_y] = view.toFrameXY(event.offsetX, event.offsetY);
 
         if (last_click) {
-            drawLine(last_click.x, last_click.y, ocx, ocy, pencil);
+            frame.drawLine(last_click.x, last_click.y, frame_x, frame_y, pencil);
         } else {
-            frame.setPixel(ocx, ocy, pencil);
+            frame.setPixel(frame_x, frame_y, pencil);
         }
-        last_click = {x: ocx, y: ocy};
+        last_click = {x: frame_x, y: frame_y};
 
         view.render();
     } else {
         last_click = null;
     }
-}, 'animation');
+};
 
 canvas.addEventListener('mousemove', onClick);
 canvas.addEventListener('mousedown', onClick);
