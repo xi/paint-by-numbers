@@ -5,15 +5,12 @@ import * as utils from './utils.js';
 
 var input = document.querySelector('input');
 var palette = document.querySelector('.palette');
-
 var canvas = document.querySelector('canvas');
 
 var frame = new Frame();
 var view = new View(canvas, frame);
 
-var data;
 var pencil = 0;
-
 var speed_x = 0;
 var speed_y = 0;
 
@@ -23,7 +20,7 @@ input.addEventListener('change', () => {
         frame.setImage(image);
 
         palette.innerHTML = '';
-        for (var i = 0; i < data.colors.length; i++) {
+        for (var i = 0; i < image.colors.length; i++) {
             var label = document.createElement('label');
             var radio = document.createElement('input');
             radio.type = 'radio';
@@ -33,8 +30,8 @@ input.addEventListener('change', () => {
             span.textContent = i;
             label.append(radio);
             label.append(span);
-            span.style.color = data.contrasts[i];
-            span.style.backgroundColor = data.colors[i];
+            span.style.color = image.contrasts[i];
+            span.style.backgroundColor = image.colors[i];
             palette.append(label);
             radio.addEventListener('change', event => {
                 pencil = parseInt(event.target.value, 10);
@@ -66,7 +63,6 @@ var applySpeed = utils.throttle(function() {
 }, 'animation');
 
 window.addEventListener('resize', () => view.refreshSize());
-view.refreshSize();
 
 window.addEventListener('wheel', event => {
     var rect = canvas.getBoundingClientRect();
@@ -85,7 +81,7 @@ window.addEventListener('wheel', event => {
 });
 
 var setPencil = function(color) {
-    if (color >= 0 && color < data.colors.length) {
+    if (color >= 0 && color < palette.pencil.length) {
         pencil = color;
         palette.pencil.value = pencil;
         palette.querySelector(':checked').parentElement.scrollIntoView();
