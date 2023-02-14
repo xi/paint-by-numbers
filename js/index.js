@@ -1,7 +1,7 @@
 import { Frame } from './frame.js';
 import { View } from './view.js';
 import { loadImage } from './loader.js';
-import * as utils from './utils.js';
+import { Animation } from './kinetic.js';
 
 var loader = document.querySelector('.loader');
 var palette = document.querySelector('.palette');
@@ -10,9 +10,16 @@ var canvas = document.querySelector('canvas');
 var frame = new Frame();
 var view = new View(canvas, frame);
 
+var moveX = new Animation((value, dt) => {
+    view.dx += value * dt * 2;
+    view.render();
+});
+var moveY = new Animation((value, dt) => {
+    view.dy += value * dt * 2;
+    view.render();
+});
+
 var pencil = 0;
-var speed_x = 0;
-var speed_y = 0;
 
 var setupPalette = function(image) {
     palette.innerHTML = '';
@@ -47,17 +54,6 @@ var setPencil = function(color) {
     }
 };
 
-var applySpeed = utils.throttle(function() {
-    view.dx += speed_x;
-    view.dy += speed_y;
-    view.render();
-    speed_x *= 0.85;
-    speed_y *= 0.85;
-    if (Math.abs(speed_x) > 0.1 || Math.abs(speed_y) > 0.1) {
-        setTimeout(applySpeed);
-    }
-}, 'animation');
-
 loader.addEventListener('submit', event => {
     event.preventDefault();
     var width = parseInt(loader.width.value, 10);
@@ -68,34 +64,47 @@ loader.addEventListener('submit', event => {
         frame.setImage(image);
         view.reset();
 
-        speed_x = 0;
-        speed_y = 0;
+        moveX.reset();
+        moveY.reset();
     });
 });
 
 window.addEventListener('resize', () => view.refreshSize());
 
 window.addEventListener('keydown', event => {
-    // FIXME: kinetic movement;
-    var step = 10;
-    if (event.key === 'w') {
-        speed_y = step;
-        applySpeed();
-    } else if (event.key === 'a') {
-        speed_x = step;
-        applySpeed();
-    } else if (event.key === 's') {
-        speed_y = -step;
-        applySpeed();
-    } else if (event.key === 'd') {
-        speed_x = -step;
-        applySpeed();
-    } else if (event.key === 'q') {
+    if (['w', 'ArrowUp'].includes(event.key)) {
+        moveY.set(1);
+    } else if (['a', 'ArrowLeft'].includes(event.key)) {
+        moveX.set(1);
+    } else if (['s', 'ArrowDown'].includes(event.key)) {
+        moveY.set(-1);
+    } else if (['d', 'ArrowRight'].includes(event.key)) {
+        moveX.set(-1);
+    } else if (['q', 'PageUp'].includes(event.key)) {
         setPencil(pencil - 1);
-    } else if (event.key === 'e') {
+    } else if (['e', 'PageDown'].includes(event.key)) {
         setPencil(pencil + 1);
+    } else if (event.key === '+') {
+        view.setZoom(view.canvas.width / 2, view.canvas.height / 2, view.zoom * 1.2);
+    } else if (event.key === '-') {
+        view.setZoom(view.canvas.width / 2, view.canvas.height / 2, view.zoom / 1.2);
     }
-    view.render();
+});
+
+window.addEventListener('keyup', event => {
+    if (['w', 'ArrowUp'].includes(event.key)) {
+        moveY.unset(1);
+    } else if (['a', 'ArrowLeft'].includes(event.key)) {
+        moveX.unset(1);
+    } else if (['s', 'ArrowDown'].includes(event.key)) {
+        moveY.unset(-1);
+    } else if (['d', 'ArrowRight'].includes(event.key)) {
+        moveX.unset(-1);
+    }
+});
+
+canvas.addEventListener('wheel', event => {
+    view.setZoom(event.offsetX, event.offsetY, view.zoom * Math.pow(2, -event.deltaY / 2000));
 });
 
 var last_click = null;
@@ -119,8 +128,3 @@ var onClick = function(event) {
 
 canvas.addEventListener('mousemove', onClick);
 canvas.addEventListener('mousedown', onClick);
-
-canvas.addEventListener('wheel', event => {
-    view.setZoom(event.offsetX, event.offsetY, view.zoom * Math.pow(2, -event.deltaY / 100 / 100));
-    view.render();
-});

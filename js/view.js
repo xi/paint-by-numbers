@@ -41,6 +41,7 @@ export class View {
         this.zoom = zoom;
         this.dx = stable_x - frame_x * zoom * this.frame.pxsize;
         this.dy = stable_y - frame_y * zoom * this.frame.pxsize;
+        this.render();
     }
 
     render() {
