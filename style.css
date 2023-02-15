@@ -21,7 +21,7 @@ canvas {
 }
 
 .palette {
-	overflow-x: auto;
+	overflow-x: scroll;
 	white-space: nowrap;
 	user-select: none;
 }
