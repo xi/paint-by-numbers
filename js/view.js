@@ -19,6 +19,9 @@ export class View {
         this.zoom = 1;
         this.dx = 0;
         this.dy = 0;
+        this.mouse = null;
+        this.prevMouse = null;
+        this.pencil = 0;
     }
 
     refreshSize() {
@@ -37,6 +40,9 @@ export class View {
         this.zoom = this.canvas.height / this.frame.canvas.height * 0.8;
         this.dx = (this.canvas.width - this.frame.canvas.width * this.zoom) / 2;
         this.dy = (this.canvas.height - this.frame.canvas.height * this.zoom) / 2;
+        this.mouse = null;
+        this.prevMouse = null;
+        this.pencil = 0;
         this.render();
     }
 
@@ -55,7 +61,22 @@ export class View {
         this.render();
     }
 
+    draw() {
+        if (this.mouse) {
+            var [x, y] = this.toFrameXY(...this.mouse);
+            if (this.prevMouse) {
+                var [x2, y2] = this.toFrameXY(...this.prevMouse);
+                this.frame.drawLine(x2, y2, x, y, this.pencil);
+            } else {
+                this.frame.setPixel(x, y, this.pencil);
+            }
+            this.prevMouse = this.mouse;
+        }
+    }
+
     render() {
+        this.draw();
+
         this.dx = Math.min(this.dx, this.canvas.width / 2);
         this.dy = Math.min(this.dy, this.canvas.height / 2);
         this.dx = Math.max(this.dx, this.canvas.width / 2 - this.frame.canvas.width * this.zoom);

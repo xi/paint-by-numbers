@@ -19,8 +19,6 @@ var moveY = new Animation((value, dt) => {
     view.render();
 });
 
-var pencil = 0;
-
 var setupPalette = function(image) {
     palette.innerHTML = '';
     for (var i = 0; i < image.colors.length; i++) {
@@ -29,7 +27,7 @@ var setupPalette = function(image) {
         radio.name = 'pencil';
         radio.value = i;
         radio.addEventListener('change', event => {
-            pencil = parseInt(event.target.value, 10);
+            view.pencil = parseInt(event.target.value, 10);
         });
 
         var span = document.createElement('span');
@@ -48,8 +46,8 @@ var setupPalette = function(image) {
 
 var setPencil = function(color) {
     if (color >= 0 && color < palette.pencil.length) {
-        pencil = color;
-        palette.pencil.value = pencil;
+        view.pencil = color;
+        palette.pencil.value = color;
         palette.querySelector(':checked').parentElement.scrollIntoView();
     }
 };
@@ -81,9 +79,9 @@ window.addEventListener('keydown', event => {
     } else if (['d', 'ArrowRight'].includes(event.key)) {
         moveX.set(-1);
     } else if (['q', 'PageUp'].includes(event.key)) {
-        setPencil(pencil - 1);
+        setPencil(view.pencil - 1);
     } else if (['e', 'PageDown'].includes(event.key)) {
-        setPencil(pencil + 1);
+        setPencil(view.pencil + 1);
     } else if (event.key === '+') {
         view.setZoom(view.canvas.width / 2, view.canvas.height / 2, view.zoom * 1.2);
     } else if (event.key === '-') {
@@ -107,24 +105,16 @@ canvas.addEventListener('wheel', event => {
     view.setZoom(event.offsetX, event.offsetY, view.zoom * Math.pow(2, -event.deltaY / 2000));
 });
 
-var last_click = null;
-
-var onClick = function(event) {
+var onMouse = function(event) {
     if (event.buttons & 1) {
-        var [x, y] = view.toFrameXY(event.offsetX, event.offsetY);
-
-        if (last_click) {
-            frame.drawLine(last_click.x, last_click.y, x, y, pencil);
-        } else {
-            frame.setPixel(x, y, pencil);
-        }
-        last_click = {x: x, y: y};
-
+        view.mouse = [event.offsetX, event.offsetY];
         view.render();
     } else {
-        last_click = null;
+        view.mouse = null;
+        view.prevMouse = null;
     }
 };
 
-canvas.addEventListener('mousemove', onClick);
-canvas.addEventListener('mousedown', onClick);
+canvas.addEventListener('mousemove', onMouse);
+canvas.addEventListener('mousedown', onMouse);
+canvas.addEventListener('mouseup', onMouse);
