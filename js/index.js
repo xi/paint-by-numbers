@@ -21,7 +21,7 @@ var moveY = new Animation((value, dt) => {
 
 var setupPalette = function(image) {
     palette.innerHTML = '';
-    for (var i = 0; i < image.colors.length; i++) {
+    for (var i = 1; i < image.colors.length; i++) {
         var radio = document.createElement('input');
         radio.type = 'radio';
         radio.name = 'pencil';
@@ -45,7 +45,7 @@ var setupPalette = function(image) {
 };
 
 var setPencil = function(color) {
-    if (color >= 0 && color < palette.pencil.length) {
+    if (color >= 1 && color <= palette.pencil.length) {
         view.pencil = color;
         palette.pencil.value = color;
         palette.querySelector(':checked').parentElement.scrollIntoView();
@@ -57,7 +57,7 @@ loader.addEventListener('submit', event => {
     var width = parseInt(loader.width.value, 10);
     loadImage(loader.file, width).then(image => {
         setupPalette(image);
-        setPencil(0);
+        setPencil(1);
 
         frame.setImage(image);
         view.reset();

@@ -21,7 +21,7 @@ export class View {
         this.dy = 0;
         this.mouse = null;
         this.prevMouse = null;
-        this.pencil = 0;
+        this.pencil = 1;
     }
 
     refreshSize() {
@@ -42,7 +42,7 @@ export class View {
         this.dy = (this.canvas.height - this.frame.canvas.height * this.zoom) / 2;
         this.mouse = null;
         this.prevMouse = null;
-        this.pencil = 0;
+        this.pencil = 1;
         this.render();
     }
 
