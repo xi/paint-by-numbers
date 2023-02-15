@@ -1,4 +1,15 @@
-import * as utils from './utils.js';
+export var throttle = function(fn) {
+    var called = false;
+    return function() {
+        if (!called) {
+            called = true;
+            requestAnimationFrame(() => {
+                called = false;
+                fn.apply(this);
+            });
+        }
+    };
+};
 
 export class View {
     constructor(canvas, frame) {
@@ -56,4 +67,4 @@ export class View {
     }
 }
 
-View.prototype.render = utils.throttle(View.prototype.render, 'animation');
+View.prototype.render = throttle(View.prototype.render);
