@@ -14,6 +14,7 @@ var rgbToSrgb = function(c) {
     } else {
         x = Math.pow(c, 1 / 2.4) * 1.055 - 0.055;
     }
+    x = Math.min(Math.max(0, x), 1);
     return x * 255;
 };
 
