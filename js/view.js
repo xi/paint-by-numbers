@@ -56,6 +56,11 @@ export class View {
     }
 
     render() {
+        this.dx = Math.min(this.dx, this.canvas.width / 2);
+        this.dy = Math.min(this.dy, this.canvas.height / 2);
+        this.dx = Math.max(this.dx, this.canvas.width / 2 - this.frame.canvas.width * this.zoom);
+        this.dy = Math.max(this.dy, this.canvas.height / 2 - this.frame.canvas.height * this.zoom);
+
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         this.ctx.drawImage(
             this.frame.canvas,
