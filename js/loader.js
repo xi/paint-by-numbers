@@ -65,7 +65,7 @@ var analyze = function(img) {
         ]);
 
         for (j = 0; j < clusters.length; j++) {
-            if (clusters[j].distance(lab) < 0.05) {
+            if (clusters[j].distance(lab) < 0.08) {
                 clusters[j].add(lab);
                 out.push(j + 1);
                 break;
