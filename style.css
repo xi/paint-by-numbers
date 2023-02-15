@@ -23,6 +23,7 @@ canvas {
 .palette {
 	overflow-x: auto;
 	white-space: nowrap;
+	user-select: none;
 }
 .palette input {
 	clip: rect(0, 0, 0, 0);
