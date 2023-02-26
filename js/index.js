@@ -2,6 +2,7 @@ import { Frame } from './frame.js';
 import { View } from './view.js';
 import { loadImage } from './loader.js';
 import { Animation } from './kinetic.js';
+import { registerPointerEvents } from './pointers.js';
 
 var loader = document.querySelector('.loader');
 var palette = document.querySelector('.palette');
@@ -19,7 +20,6 @@ var moveY = new Animation((value, dt) => {
     view.render();
 });
 
-var pointers = [];
 var pointersStartState = null;
 
 var setupPalette = function(image) {
@@ -108,40 +108,25 @@ canvas.addEventListener('wheel', event => {
     view.setZoom(event.offsetX, event.offsetY, view.zoom * Math.pow(2, -event.deltaY / 2000));
 });
 
-canvas.addEventListener('pointerdown', event => {
-    if (pointers.length < 2 && (event.buttons & 1 || event.pointerType !== 'mouse')) {
-        canvas.setPointerCapture(event.pointerId);
-
-        // clone because offsetX/Y change to 0 on the original event
-        pointers.push({
-            id: event.pointerId,
-            x: event.offsetX,
-            y: event.offsetY,
-        });
-
-        pointersStartState = {
-            pointers: pointers.map(e => ({x: e.x, y: e.y})),
-            view: {
-                dx: view.dx,
-                dy: view.dy,
-                zoom: view.zoom,
-            },
-        };
-    }
-});
-
-canvas.addEventListener('pointermove', event => {
-    var i = pointers.findIndex(e => e.id === event.pointerId);
-    if (i !== -1) {
-        pointers[i].x = event.offsetX;
-        pointers[i].y = event.offsetY;
-
+registerPointerEvents(canvas, {
+    down(pointers) {
+        if (pointers.length === 2) {
+            view.resetDraw();
+            pointersStartState = {
+                pointers: pointers.map(e => ({x: e.x, y: e.y})),
+                view: {
+                    dx: view.dx,
+                    dy: view.dy,
+                    zoom: view.zoom,
+                },
+            };
+        }
+    },
+    move(pointers) {
         if (pointers.length === 1) {
             view.mouse = [event.offsetX, event.offsetY];
             view.render();
         } else {
-            view.mouse = null;
-            view.prevMouse = null;
             view.transform(
                 pointersStartState.pointers[0],
                 pointersStartState.pointers[1],
@@ -150,24 +135,13 @@ canvas.addEventListener('pointermove', event => {
                 pointersStartState.view,
             );
         }
-    }
-});
-
-var pointerup = function(event) {
-    var i = pointers.findIndex(e => e.id === event.pointerId);
-    if (i !== -1) {
+    },
+    up(pointers) {
         if (pointers.length === 1) {
             view.mouse = [event.offsetX, event.offsetY];
-            view.draw();
-
-            view.prevMouse = null;
-            view.mouse = null;
+            view.draw();  // bypass throttle
             view.render();
+            view.resetDraw();
         }
-        pointers = [];
-        pointersStartState = null;
-    }
-};
-
-canvas.addEventListener('pointerup', pointerup);
-canvas.addEventListener('pointercancel', pointerup);
+    },
+});

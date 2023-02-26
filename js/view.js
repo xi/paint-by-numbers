@@ -97,6 +97,11 @@ export class View {
         }
     }
 
+    resetDraw() {
+        this.mouse = null;
+        this.prevMouse = null;
+    }
+
     render() {
         this.draw();
 
