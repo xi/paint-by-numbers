@@ -13,6 +13,7 @@ body {
 canvas {
 	block-size: 100%;
 	inline-size: 100%;
+	touch-action: none;
 }
 
 .loader {

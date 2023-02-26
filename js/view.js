@@ -61,6 +61,29 @@ export class View {
         this.render();
     }
 
+    transform(old1, old2, new1, new2, old_view) {
+        var cx_old = (old1.x + old2.x) / 2;
+        var cy_old = (old1.y + old2.y) / 2;
+        var cx_new = (new1.x + new2.x) / 2;
+        var cy_new = (new1.y + new2.y) / 2;
+
+        var dx_old = old1.x - old2.x;
+        var dy_old = old1.y - old2.y;
+        var d_old = Math.sqrt(dx_old * dx_old + dy_old * dy_old);
+
+        var dx_new = new1.x - new2.x;
+        var dy_new = new1.y - new2.y;
+        var d_new = Math.sqrt(dx_new * dx_new + dy_new * dy_new);
+
+        // move center
+        this.dx = old_view.dx + cx_new - cx_old;
+        this.dy = old_view.dy + cy_new - cy_old;
+
+        // change zoom and keep center
+        this.zoom = old_view.zoom;
+        this.setZoom(cx_new, cy_new, old_view.zoom * d_new / d_old);
+    }
+
     draw() {
         if (this.mouse) {
             var [x, y] = this.toFrameXY(...this.mouse);

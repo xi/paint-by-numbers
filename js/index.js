@@ -19,6 +19,9 @@ var moveY = new Animation((value, dt) => {
     view.render();
 });
 
+var pointers = [];
+var pointersStartState = null;
+
 var setupPalette = function(image) {
     palette.innerHTML = '';
     for (var i = 1; i < image.colors.length; i++) {
@@ -105,16 +108,66 @@ canvas.addEventListener('wheel', event => {
     view.setZoom(event.offsetX, event.offsetY, view.zoom * Math.pow(2, -event.deltaY / 2000));
 });
 
-var onMouse = function(event) {
-    if (event.buttons & 1) {
-        view.mouse = [event.offsetX, event.offsetY];
-        view.render();
-    } else {
-        view.mouse = null;
-        view.prevMouse = null;
+canvas.addEventListener('pointerdown', event => {
+    if (pointers.length < 2 && (event.buttons & 1 || event.pointerType !== 'mouse')) {
+        canvas.setPointerCapture(event.pointerId);
+
+        // clone because offsetX/Y change to 0 on the original event
+        pointers.push({
+            id: event.pointerId,
+            x: event.offsetX,
+            y: event.offsetY,
+        });
+
+        pointersStartState = {
+            pointers: pointers.map(e => ({x: e.x, y: e.y})),
+            view: {
+                dx: view.dx,
+                dy: view.dy,
+                zoom: view.zoom,
+            },
+        };
+    }
+});
+
+canvas.addEventListener('pointermove', event => {
+    var i = pointers.findIndex(e => e.id === event.pointerId);
+    if (i !== -1) {
+        pointers[i].x = event.offsetX;
+        pointers[i].y = event.offsetY;
+
+        if (pointers.length === 1) {
+            view.mouse = [event.offsetX, event.offsetY];
+            view.render();
+        } else {
+            view.mouse = null;
+            view.prevMouse = null;
+            view.transform(
+                pointersStartState.pointers[0],
+                pointersStartState.pointers[1],
+                pointers[0],
+                pointers[1],
+                pointersStartState.view,
+            );
+        }
+    }
+});
+
+var pointerup = function(event) {
+    var i = pointers.findIndex(e => e.id === event.pointerId);
+    if (i !== -1) {
+        if (pointers.length === 1) {
+            view.mouse = [event.offsetX, event.offsetY];
+            view.draw();
+
+            view.prevMouse = null;
+            view.mouse = null;
+            view.render();
+        }
+        pointers = [];
+        pointersStartState = null;
     }
 };
 
-canvas.addEventListener('mousemove', onMouse);
-canvas.addEventListener('mousedown', onMouse);
-canvas.addEventListener('mouseup', onMouse);
+canvas.addEventListener('pointerup', pointerup);
+canvas.addEventListener('pointercancel', pointerup);
