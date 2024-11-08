@@ -110,6 +110,7 @@ canvas.addEventListener('wheel', event => {
 
 registerPointerEvents(canvas, {
     down(pointers) {
+        palette.inert = true;
         if (pointers.length === 2) {
             view.resetDraw();
             pointersStartState = {
@@ -143,5 +144,6 @@ registerPointerEvents(canvas, {
             view.render();
             view.resetDraw();
         }
+        palette.inert = false;
     },
 });
