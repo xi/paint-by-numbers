@@ -57,6 +57,7 @@ canvas {
 
 @media (prefers-color-scheme: dark) {
 	:root {
+		color-scheme: dark;
 		background: black;
 		color: white;
 	}
