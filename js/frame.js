@@ -1,6 +1,6 @@
 export class Frame {
     constructor() {
-        this.pxsize = 12;
+        this.pxsize = 15;
         this.image = null;
         this.canvas = document.createElement('canvas');
         this.ctx = this.canvas.getContext('2d');
