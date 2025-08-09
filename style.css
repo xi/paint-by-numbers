@@ -27,8 +27,10 @@ canvas {
 }
 
 .loader {
+	display: flex;
 	padding: 0.2em;
-	text-align: center;
+	gap: 0.2em;
+	justify-content: center;
 }
 
 .palette {
