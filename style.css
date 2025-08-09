@@ -29,8 +29,8 @@ canvas {
 .palette input {
 	clip-path: circle(0);
 	position: absolute;
-	left: 0;
-	top: 0;
+	inset-inline: 0;
+	inset-block-end: 0;
 }
 .palette span {
 	display: inline-block;
