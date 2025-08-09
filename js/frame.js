@@ -28,6 +28,7 @@ export class Frame {
         );
         if (color !== this.image.data[i]) {
             this.ctx.fillStyle = this.image.contrasts[color];
+            this.ctx.font = `${this.pxsize * 0.8}px sans-serif`;
             this.ctx.fillText(
                 this.image.data[i],
                 (x + 0.5) * this.pxsize,
