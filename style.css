@@ -10,6 +10,16 @@ body {
 	block-size: 100vb;
 }
 
+button,
+input,
+input[type="file"]::file-selector-button {
+	padding-block: 0.2em;
+	padding-inline: 0.6em;
+	font-family: inherit;
+	font-size: inherit;
+	line-height: 1.6;
+}
+
 canvas {
 	block-size: 100%;
 	inline-size: 100%;
