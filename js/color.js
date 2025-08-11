@@ -1,3 +1,5 @@
+// https://bottosson.github.io/posts/oklab/
+
 var srgbToRgb = function(c) {
     var x = c / 255;
     if (x < 0.04045) {
