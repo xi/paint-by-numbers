@@ -63,3 +63,18 @@ export var hex = function(rgb) {
         + Math.floor(rgb[2] / 16).toString(16);
 };
 
+export var roundLab = function(lab) {
+    var rgb = labToRgb(lab);
+    rgb = rgb.map(c => Math.floor(c / 16) * 16);
+    return rgbToLab(rgb);
+};
+
+export var distance = function(lab1, lab2) {
+    var rounded1 = roundLab(lab1);
+    var rounded2 = roundLab(lab2);
+    return Math.sqrt(
+        Math.pow(rounded1[0] - rounded2[0], 2)
+        + Math.pow(rounded1[1] - rounded2[1], 2)
+        + Math.pow(rounded1[2] - rounded2[2], 2)
+    );
+};

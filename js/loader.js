@@ -1,4 +1,4 @@
-import { rgbToLab, labToRgb, hex } from './color.js';
+import { rgbToLab, labToRgb, distance, hex } from './color.js';
 
 var file2img = function(file) {
     // FIXME: uses unsafe inline image
@@ -28,19 +28,10 @@ var img2data = function(img, width) {
     return _ctx.getImageData(0, 0, _canvas.width, _canvas.height);
 };
 
-
 class Cluster {
     constructor(center) {
         this.center = center;
         this.count = 1;
-    }
-
-    distance(color) {
-        return Math.sqrt(
-            Math.pow(this.center[0] - color[0], 2)
-            + Math.pow(this.center[1] - color[1], 2)
-            + Math.pow(this.center[2] - color[2], 2)
-        );
     }
 
     add(color) {
@@ -65,7 +56,7 @@ var analyze = function(img) {
         ]);
 
         for (j = 0; j < clusters.length; j++) {
-            if (clusters[j].distance(lab) < 0.08) {
+            if (distance(clusters[j].center, lab) < 0.08) {
                 clusters[j].add(lab);
                 out.push(j + 1);
                 break;
